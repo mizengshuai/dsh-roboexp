@@ -1,0 +1,48 @@
+{
+  "name": "dsh-roboexp",
+  "version": "0.6.2",
+  "description": "RoboEXP (ZMROBO 机器人快车) subroutine & main-program authoring tools for DeepSeek Harness — 让 agent 直接生成/编译/挂接竞赛级子程序",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "kb",
+    "bin",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "roboexp",
+    "zmrobo",
+    "robotics"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.0",
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.0",
+    "@deepseek-ai/schemastery": ">=3.18.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-tools": "^0.2.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USER/dsh-roboexp.git"
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_USER/dsh-roboexp#readme"
+}

@@ -1,0 +1,9 @@
+# dsh-roboexp bundle patch: register the plugin into every composition.
+# Users can override config here (or via the desktop plugin settings UI):
+#   - id: roboexp
+#     name: dsh-roboexp
+#     config:
+#       softwareType: E7RCU
+- insert:
+    - id: roboexp
+      name: dsh-roboexp
