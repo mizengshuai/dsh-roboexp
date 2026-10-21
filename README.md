@@ -15,7 +15,7 @@ DeepSeek Harness 插件：让 agent 直接编写 [中鸣 RoboEXP（机器人快�
 
 方式一（GitHub，推荐）：
 ```sh
-dsh plugin --profile desktop add github:<owner>/dsh-roboexp
+dsh plugin --profile desktop add github:mizengshuai/dsh-roboexp
 ```
 
 方式二（npm，发布后）：
