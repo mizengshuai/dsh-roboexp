@@ -13,9 +13,12 @@ DeepSeek Harness 插件：让 agent 直接编写 [中鸣 RoboEXP（机器人快�
 
 前置条件：Windows + 已安装机器人快车（RoboEXP，默认自动探测 `%APPDATA%\RoboEXP`，可用配置 `roboDir` 或环境变量 `ROBOEXP_DIR` 覆盖）+ .NET Framework 4.x（Windows 自带）。
 
-方式一（GitHub，推荐）：
+方式一（GitHub / Gitee 镜像）：
 ```sh
+# GitHub
 dsh plugin --profile desktop add github:mizengshuai/dsh-roboexp
+# Gitee（国内访问更快；任意 git 托管都支持 git+https 完整地址）
+dsh plugin --profile desktop add git+https://gitee.com/mizengshuai/dsh-roboexp.git
 ```
 
 方式二（npm，发布后）：
