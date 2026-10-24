@@ -1,6 +1,6 @@
 {
   "name": "dsh-roboexp",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "RoboEXP (ZMROBO 机器人快车) subroutine & main-program authoring tools for DeepSeek Harness — 让 agent 直接生成/编译/挂接竞赛级子程序",
   "type": "module",
   "main": "lib/index.js",
@@ -10,7 +10,8 @@
     "kb",
     "bin",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "workbuddy"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json"

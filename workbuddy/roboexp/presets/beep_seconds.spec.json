@@ -1,0 +1,23 @@
+{
+  "name": "BeepSeconds",
+  "caption": "长鸣",
+  "description": "蜂鸣器持续响指定秒数",
+  "icon": "system:SetInBeep",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "seconds",
+      "type": "float",
+      "default": "1",
+      "min": "0.1",
+      "max": "60",
+      "desc": "持续秒数"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    SetInBeep(ON);\n    SetWaitForTime(seconds);\n    SetInBeep(OFF);\n}"
+}

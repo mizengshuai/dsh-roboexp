@@ -1,0 +1,31 @@
+{
+  "name": "SpinRight",
+  "caption": "原地右转",
+  "description": "左右轮反向旋转原地转向（与 SpinLeft 方向相反）",
+  "icon": "system:SetMotor",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "speed",
+      "type": "int",
+      "default": "60",
+      "min": "1",
+      "max": "100",
+      "desc": "速度(1-100)"
+    },
+    {
+      "name": "seconds",
+      "type": "float",
+      "default": "0.5",
+      "min": "0.1",
+      "max": "60",
+      "desc": "持续秒数"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    SetMotor(_M1_, speed);\n    SetMotor(_M2_, -speed);\n    SetWaitForTime(seconds);\n    SetMotor(_M1_, 0);\n    SetMotor(_M2_, 0);\n}"
+}

@@ -36,6 +36,16 @@ dsh plugin --profile desktop add ./dsh-roboexp-x.y.z.tgz
 
 安装后重启 DeepSeek Harness 桌面版，会话中出现 14 个 `roboexp_*` 工具。
 
+## WorkBuddy / CodeBuddy 技能版
+
+同仓库 `workbuddy/roboexp/` 目录是同一能力的 WorkBuddy/CodeBuddy 技能封装（无需 DeepSeek Harness）：
+```sh
+git clone https://github.com/mizengshuai/dsh-roboexp.git
+# WorkBuddy：把 workbuddy/roboexp 整个文件夹复制到 ~/.workbuddy/skills/ 下
+xcopy /E /I dsh-roboexp\workbuddyoboexp "%USERPROFILE%\.workbuddy\skillsoboexp"
+```
+技能含 SKILL.md（工作流+命令手册+13 个现成预设 spec）、bin/ModuleFactory.exe、竞赛知识库与四份参考文档；agent 经终端直接调用，对话中提到巡线/子程序/机器人快车等关键词自动触发。
+
 ## 工具
 
 | 工具 | 作用 |

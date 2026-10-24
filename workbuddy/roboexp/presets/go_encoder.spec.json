@@ -1,0 +1,47 @@
+{
+  "name": "GoEncoder",
+  "caption": "编码走直线",
+  "description": "编码器闭环走直线：双轮编码差实时纠偏，走满目标编码值停车（标准高速马达一圈=780，异型≈1080）",
+  "icon": "system:GetMotorCode",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "motorL",
+      "type": "_MOTOR_",
+      "default": "_M1_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "左马达"
+    },
+    {
+      "name": "motorR",
+      "type": "_MOTOR_",
+      "default": "_M2_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "右马达"
+    },
+    {
+      "name": "speed",
+      "type": "int",
+      "default": "50",
+      "min": "10",
+      "max": "100",
+      "desc": "速度"
+    },
+    {
+      "name": "target",
+      "type": "long",
+      "default": "780",
+      "min": "1",
+      "max": "1000000",
+      "desc": "目标编码值（一圈=780）"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    static int s_dir = 0;\n    long baseL, baseR, cl, cr, diff;\n    int l, r;\n\n    SetMotorCode(motorL);\n    SetMotorCode(motorR);\n    baseL = GetMotorCode(motorL);\n    baseR = GetMotorCode(motorR);\n\n    if (s_dir == 0)\n    {\n        s_dir = (GetMotorCode(motorL) >= baseL) ? 1 : -1;\n    }\n\n    while (1)\n    {\n        cl = GetMotorCode(motorL) - baseL;\n        cr = GetMotorCode(motorR) - baseR;\n        if (s_dir < 0)\n        {\n            cl = -cl;\n            cr = -cr;\n        }\n        if (cl >= target && cr >= target) break;\n\n        diff = cl - cr;\n        l = speed - diff / 8;\n        r = speed + diff / 8;\n        if (l > 100) l = 100;\n        if (l < -100) l = -100;\n        if (r > 100) r = 100;\n        if (r < -100) r = -100;\n        SetMotor(motorL, l);\n        SetMotor(motorR, r);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}"
+}

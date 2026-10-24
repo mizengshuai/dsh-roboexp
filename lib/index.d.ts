@@ -8,4 +8,23 @@ export interface Config {
     modulesDir: string;
 }
 export declare const Config: Schema<Config>;
+type PresetParam = {
+    name: string;
+    type: string;
+    default: string;
+    min: string;
+    max: string;
+    desc: string;
+};
+interface Preset {
+    id: string;
+    name: string;
+    caption: string;
+    description: string;
+    icon: string;
+    params: PresetParam[];
+    code: string;
+}
+export declare const PRESETS: Preset[];
 export declare function apply(ctx: Context, config: Config): void;
+export {};

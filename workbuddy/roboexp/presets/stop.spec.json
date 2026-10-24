@@ -1,0 +1,14 @@
+{
+  "name": "StopMotors",
+  "caption": "停车",
+  "description": "立即停止双马达",
+  "icon": "system:SetMotor",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    SetMotor(_M1_, 0);\n    SetMotor(_M2_, 0);\n}"
+}

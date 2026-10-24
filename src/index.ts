@@ -323,7 +323,7 @@ interface Preset {
 const P = (name: string, type: string, def: string, min: string, max: string, desc: string): PresetParam =>
   ({ name, type, default: def, min, max, desc })
 
-const PRESETS: Preset[] = [
+export const PRESETS: Preset[] = [
   {
     id: 'forward', name: 'Forward', caption: '前进', description: '双马达同速前进指定秒数后停止',
     icon: 'system:SetMotor',

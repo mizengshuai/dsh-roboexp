@@ -1,0 +1,31 @@
+{
+  "name": "Dance",
+  "caption": "欢乐舞",
+  "description": "左右摇摆 n 次的小舞蹈",
+  "icon": "system:SetMotor",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "times",
+      "type": "int",
+      "default": "3",
+      "min": "1",
+      "max": "50",
+      "desc": "摇摆次数"
+    },
+    {
+      "name": "speed",
+      "type": "int",
+      "default": "60",
+      "min": "1",
+      "max": "100",
+      "desc": "速度(1-100)"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    int i;\n    for (i = 0; i < times; i++)\n    {\n        SetMotor(_M1_, -speed);\n        SetMotor(_M2_, speed);\n        SetWaitForTime(0.3);\n        SetMotor(_M1_, speed);\n        SetMotor(_M2_, -speed);\n        SetWaitForTime(0.3);\n    }\n    SetMotor(_M1_, 0);\n    SetMotor(_M2_, 0);\n}"
+}

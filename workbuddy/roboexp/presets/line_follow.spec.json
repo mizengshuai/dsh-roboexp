@@ -1,0 +1,79 @@
+{
+  "name": "LineFollow",
+  "caption": "走黑线",
+  "description": "双光电传感器 PD 循迹（含丢线原地找回、2 秒丢线停车；阈值自动兜底）",
+  "icon": "system:GetLightSensor",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "lightL",
+      "type": "_PORT_",
+      "default": "_P1_",
+      "min": "_P1_",
+      "max": "_P8_",
+      "desc": "左光电端口"
+    },
+    {
+      "name": "lightR",
+      "type": "_PORT_",
+      "default": "_P2_",
+      "min": "_P1_",
+      "max": "_P8_",
+      "desc": "右光电端口"
+    },
+    {
+      "name": "motorL",
+      "type": "_MOTOR_",
+      "default": "_M1_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "左马达"
+    },
+    {
+      "name": "motorR",
+      "type": "_MOTOR_",
+      "default": "_M2_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "右马达"
+    },
+    {
+      "name": "speed",
+      "type": "int",
+      "default": "50",
+      "min": "10",
+      "max": "100",
+      "desc": "基础速度"
+    },
+    {
+      "name": "kp",
+      "type": "int",
+      "default": "30",
+      "min": "1",
+      "max": "100",
+      "desc": "比例系数"
+    },
+    {
+      "name": "kd",
+      "type": "int",
+      "default": "10",
+      "min": "0",
+      "max": "100",
+      "desc": "微分系数"
+    },
+    {
+      "name": "seconds",
+      "type": "float",
+      "default": "0",
+      "min": "0",
+      "max": "3600",
+      "desc": "行驶秒数，0=一直走"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    static int s_lastErr = 0;\n    static int s_lastTurn = 0;\n    static int s_lastTime = 0;\n    static int s_lostMs = 0;\n    int t0, t, dt, rawL, rawR, thL, thR, dL, dR, err, turn, left, right;\n\n    SetLightSensorLed(lightL, 1);\n    SetLightSensorLed(lightR, 1);\n    SetWaitForTime(0.05);\n\n    t0 = GetSysTime();\n    s_lastTime = t0;\n    while (1)\n    {\n        if (seconds > 0.0 && GetSysTime() - t0 >= (int)(seconds * 1000.0)) break;\n\n        t = GetSysTime();\n        dt = t - s_lastTime;\n        if (dt < 0) dt = 10;\n        if (dt < 10)\n        {\n            SetWaitForTime(0.001);\n            continue;\n        }\n        s_lastTime = t;\n\n        rawL = GetLightSensor(lightL);\n        rawR = GetLightSensor(lightR);\n        thL = GetLightSensorThreshold(lightL);\n        thR = GetLightSensorThreshold(lightR);\n        if (thL < 50) thL = 700;\n        if (thR < 50) thR = 700;\n\n        dL = (thL - rawL) * 100 / thL;\n        dR = (thR - rawR) * 100 / thR;\n        if (dL < 0) dL = 0;\n        if (dL > 100) dL = 100;\n        if (dR < 0) dR = 0;\n        if (dR > 100) dR = 100;\n\n        err = dL - dR;\n\n        if (dL < 15 && dR < 15)\n        {\n            s_lostMs = s_lostMs + dt;\n            if (s_lostMs < 2000)\n            {\n                if (s_lastTurn >= 0)\n                {\n                    SetMotor(motorL, -speed / 2);\n                    SetMotor(motorR, speed / 2);\n                }\n                else\n                {\n                    SetMotor(motorL, speed / 2);\n                    SetMotor(motorR, -speed / 2);\n                }\n                SetWaitForTime(0.01);\n                continue;\n            }\n            SetMotor(motorL, 0);\n            SetMotor(motorR, 0);\n            break;\n        }\n        s_lostMs = 0;\n\n        turn = kp * err / 100;\n        turn = turn + kd * (err - s_lastErr) / 100;\n\n        left = speed - turn;\n        right = speed + turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n\n        s_lastErr = err;\n        s_lastTurn = turn;\n\n        SetWaitForTime(0.01);\n    }\n}"
+}

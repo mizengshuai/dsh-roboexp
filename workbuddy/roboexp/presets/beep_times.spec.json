@@ -1,0 +1,23 @@
+{
+  "name": "BeepTimes",
+  "caption": "鸣笛",
+  "description": "蜂鸣器响 n 次（0.2 秒开 0.2 秒关）",
+  "icon": "system:SetInBeep",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "n",
+      "type": "int",
+      "default": "2",
+      "min": "1",
+      "max": "100",
+      "desc": "响的次数"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    int i;\n    for (i = 0; i < n; i++)\n    {\n        SetInBeep(ON);\n        SetWaitForTime(0.2);\n        SetInBeep(OFF);\n        SetWaitForTime(0.2);\n    }\n}"
+}

@@ -1,0 +1,355 @@
+{
+ "license": "本模块库为 dsh-roboexp 原创实现（MIT），可自由使用与修改",
+ "modules": [
+  {
+   "name": "CatchLine",
+   "caption": "遇线停",
+   "description": "巡线并计路口：watchPort 指定端口号（P1-P8 填 1-8）的光电压到线（变黑）计一次，计满 number 个停车。注意 watchPort 应是巡线两光电之一或外侧专判路口的光电",
+   "icon": "system:GetLightSensor",
+   "params": [
+    {
+     "name": "lightL",
+     "type": "_PORT_",
+     "default": "_P1_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "左巡线光电"
+    },
+    {
+     "name": "lightR",
+     "type": "_PORT_",
+     "default": "_P2_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "右巡线光电"
+    },
+    {
+     "name": "watchPort",
+     "type": "int",
+     "default": "1",
+     "min": "1",
+     "max": "8",
+     "desc": "计路口的光电端口号：P1 填 1 … P8 填 8"
+    },
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "60",
+     "min": "10",
+     "max": "100",
+     "desc": "巡线速度"
+    },
+    {
+     "name": "number",
+     "type": "int",
+     "default": "1",
+     "min": "1",
+     "max": "99",
+     "desc": "计满几个路口停"
+    }
+   ],
+   "code": "{\n    static int s_onLine = 0;\n    int rawL, rawR, thL, thR, dL, dR, err, turn, left, right;\n    int count = 0;\n    int rawW, thW;\n\n    SetLightSensorLed(lightL, 1);\n    SetLightSensorLed(lightR, 1);\n    SetWaitForTime(0.05);\n\n    while (1)\n    {\n        rawL = GetLightSensor(lightL);\n        rawR = GetLightSensor(lightR);\n        thL = GetLightSensorThreshold(lightL);\n        thR = GetLightSensorThreshold(lightR);\n        if (thL < 50) thL = 700;\n        if (thR < 50) thR = 700;\n\n        dL = (thL - rawL) * 100 / thL;\n        dR = (thR - rawR) * 100 / thR;\n        if (dL < 0) dL = 0;\n        if (dL > 100) dL = 100;\n        if (dR < 0) dR = 0;\n        if (dR > 100) dR = 100;\n\n        rawW = GetLightSensor((unsigned char)watchPort);\n        thW = GetLightSensorThreshold((unsigned char)watchPort);\n        if (thW < 50) thW = 700;\n        if (rawW < thW)\n        {\n            if (s_onLine == 0)\n            {\n                s_onLine = 1;\n                count = count + 1;\n                if (count >= number) break;\n            }\n        }\n        else\n        {\n            s_onLine = 0;\n        }\n\n        err = dL - dR;\n        turn = err / 3;\n        left = speed - turn;\n        right = speed + turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n\n        SetWaitForTime(0.01);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "巡线"
+   ]
+  },
+  {
+   "name": "FollowWall",
+   "caption": "超声跟墙",
+   "description": "保持设定距离沿墙行驶：距离误差比例修正转向；超声无效读数（888 超范围/999 出错）时沿用上次修正",
+   "icon": "system:GetUltrasound",
+   "params": [
+    {
+     "name": "sonar",
+     "type": "_PORT_",
+     "default": "_P1_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "超声模块端口"
+    },
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "40",
+     "min": "10",
+     "max": "100",
+     "desc": "速度"
+    },
+    {
+     "name": "distCm",
+     "type": "int",
+     "default": "15",
+     "min": "4",
+     "max": "100",
+     "desc": "保持距离(cm)"
+    },
+    {
+     "name": "seconds",
+     "type": "float",
+     "default": "0",
+     "min": "0",
+     "max": "3600",
+     "desc": "行驶秒数，0=一直"
+    }
+   ],
+   "code": "{\n    static int s_turn = 0;\n    int d, err, turn, left, right, t0;\n\n    t0 = GetSysTime();\n    while (1)\n    {\n        if (seconds > 0.0 && GetSysTime() - t0 >= (int)(seconds * 1000.0)) break;\n\n        d = GetUltrasound(sonar);\n        if (d >= 4 && d <= 180)\n        {\n            err = d - distCm;\n            turn = err / 2;\n            if (turn > 30) turn = 30;\n            if (turn < -30) turn = -30;\n            s_turn = turn;\n        }\n\n        left = speed + s_turn;\n        right = speed - s_turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n        SetWaitForTime(0.02);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "超声"
+   ]
+  },
+  {
+   "name": "LineBmp",
+   "caption": "巡线编码",
+   "description": "PD 巡线走到指定编码值停车。目标编码 = 轮周长对应编码比例换算（标准高速马达一圈约 780）",
+   "icon": "system:GetMotorCode",
+   "params": [
+    {
+     "name": "lightL",
+     "type": "_PORT_",
+     "default": "_P1_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "左光电"
+    },
+    {
+     "name": "lightR",
+     "type": "_PORT_",
+     "default": "_P2_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "右光电"
+    },
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "60",
+     "min": "10",
+     "max": "100",
+     "desc": "巡线速度"
+    },
+    {
+     "name": "target",
+     "type": "long",
+     "default": "780",
+     "min": "1",
+     "max": "1000000",
+     "desc": "目标编码值"
+    }
+   ],
+   "code": "{\n    long baseL, baseR, avg;\n    int rawL, rawR, thL, thR, dL, dR, err, turn, left, right;\n\n    SetLightSensorLed(lightL, 1);\n    SetLightSensorLed(lightR, 1);\n    SetMotorCode(motorL);\n    SetMotorCode(motorR);\n    baseL = GetMotorCode(motorL);\n    baseR = GetMotorCode(motorR);\n    SetWaitForTime(0.05);\n\n    while (1)\n    {\n        avg = (GetMotorCode(motorL) - baseL + GetMotorCode(motorR) - baseR) / 2;\n        if (avg >= target) break;\n        rawL = GetLightSensor(lightL);\n        rawR = GetLightSensor(lightR);\n        thL = GetLightSensorThreshold(lightL);\n        thR = GetLightSensorThreshold(lightR);\n        if (thL < 50) thL = 700;\n        if (thR < 50) thR = 700;\n\n        dL = (thL - rawL) * 100 / thL;\n        dR = (thR - rawR) * 100 / thR;\n        if (dL < 0) dL = 0;\n        if (dL > 100) dL = 100;\n        if (dR < 0) dR = 0;\n        if (dR > 100) dR = 100;\n\n        err = dL - dR;\n        turn = err / 3;\n        left = speed - turn;\n        right = speed + turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n\n        SetWaitForTime(0.01);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "巡线"
+   ]
+  },
+  {
+   "name": "LineTight",
+   "caption": "紧巡线",
+   "description": "高增益 PD 巡线：贴线紧、修正快；双光电同时丢线立即停车鸣笛（安全优先，不自动找回）",
+   "icon": "system:SetLightSensorLed",
+   "params": [
+    {
+     "name": "lightL",
+     "type": "_PORT_",
+     "default": "_P1_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "左光电"
+    },
+    {
+     "name": "lightR",
+     "type": "_PORT_",
+     "default": "_P2_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "右光电"
+    },
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "70",
+     "min": "10",
+     "max": "100",
+     "desc": "速度"
+    }
+   ],
+   "code": "{\n    static int s_lastErr = 0;\n    int rawL, rawR, thL, thR, dL, dR, err, turn, left, right;\n\n    SetLightSensorLed(lightL, 1);\n    SetLightSensorLed(lightR, 1);\n    SetWaitForTime(0.05);\n\n    while (1)\n    {\n        rawL = GetLightSensor(lightL);\n        rawR = GetLightSensor(lightR);\n        thL = GetLightSensorThreshold(lightL);\n        thR = GetLightSensorThreshold(lightR);\n        if (thL < 50) thL = 700;\n        if (thR < 50) thR = 700;\n\n        dL = (thL - rawL) * 100 / thL;\n        dR = (thR - rawR) * 100 / thR;\n        if (dL < 0) dL = 0;\n        if (dL > 100) dL = 100;\n        if (dR < 0) dR = 0;\n        if (dR > 100) dR = 100;\n\n        if (dL < 10 && dR < 10)\n        {\n            SetMotor(motorL, 0);\n            SetMotor(motorR, 0);\n            SetInBeep(ON);\n            SetWaitForTime(0.3);\n            SetInBeep(OFF);\n            break;\n        }\n\n        err = dL - dR;\n        turn = err * 2 + (err - s_lastErr);\n        s_lastErr = err;\n        left = speed - turn;\n        right = speed + turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n\n        SetWaitForTime(0.01);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "巡线"
+   ]
+  },
+  {
+   "name": "TraceCatchLine",
+   "caption": "寻迹卡遇线停",
+   "description": "寻迹卡（智能巡线模块 V2）版巡线+计路口：sensor 指定通道编号 1-7（1/7 为外侧路口判断通道，3/4/5 为中间巡线通道，与官方手册一致）；该通道压到线计一次，计满停车。相对光值低于参考值视为压线——若实测极性相反，把两处比较方向对调即可",
+   "icon": "system:GetTraceV2I2C",
+   "params": [
+    {
+     "name": "tracePort",
+     "type": "_PORT_",
+     "default": "_P1_",
+     "min": "_P1_",
+     "max": "_P8_",
+     "desc": "寻迹卡接线端口"
+    },
+    {
+     "name": "sensor",
+     "type": "int",
+     "default": "1",
+     "min": "1",
+     "max": "7",
+     "desc": "计路口的通道编号 1-7（1=最左 … 7=最右）"
+    },
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "60",
+     "min": "10",
+     "max": "100",
+     "desc": "巡线速度"
+    },
+    {
+     "name": "number",
+     "type": "int",
+     "default": "1",
+     "min": "1",
+     "max": "99",
+     "desc": "计满几个路口停"
+    }
+   ],
+   "code": "{\n    static int s_onLine = 0;\n    int r3, r4, r5, f3, f4, f5, rw, fw, err, turn, left, right;\n    int count = 0;\n\n    /* 通道 n 相对光值 = GetTraceV2I2C(端口, n)；参考值 = GetTraceV2I2C(端口, 10+n) */\n    /* 相对光值 < 参考值 视为压到线（极性若相反请对调两处比较） */\n    while (1)\n    {\n        r3 = GetTraceV2I2C(tracePort, 3);\n        r4 = GetTraceV2I2C(tracePort, 4);\n        r5 = GetTraceV2I2C(tracePort, 5);\n        f3 = GetTraceV2I2C(tracePort, 13);\n        f4 = GetTraceV2I2C(tracePort, 14);\n        f5 = GetTraceV2I2C(tracePort, 15);\n\n        rw = GetTraceV2I2C(tracePort, sensor);\n        fw = GetTraceV2I2C(tracePort, 10 + sensor);\n        if (rw < fw)\n        {\n            if (s_onLine == 0)\n            {\n                s_onLine = 1;\n                count = count + 1;\n                if (count >= number) break;\n            }\n        }\n        else\n        {\n            s_onLine = 0;\n        }\n\n        /* 中央三通道压线加权：4 号压线=线在中央不偏差；3 压线=线偏左；5 压线=线偏右 */\n        err = 0;\n        if (r3 < f3) err = err + 2;\n        if (r5 < f5) err = err - 2;\n        turn = err * 8;\n\n        left = speed - turn;\n        right = speed + turn;\n        if (left > 100) left = 100;\n        if (left < -100) left = -100;\n        if (right > 100) right = 100;\n        if (right < -100) right = -100;\n        SetMotor(motorL, left);\n        SetMotor(motorR, right);\n\n        SetWaitForTime(0.01);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "巡线"
+   ]
+  },
+  {
+   "name": "TurnBmp",
+   "caption": "差速转角",
+   "description": "双轮反向原地转，两轮编码量都到 target 停车（90° 的 target 需按轮距实测定，约为周长×轮距/轮径/4）",
+   "icon": "system:SetMotorCode",
+   "params": [
+    {
+     "name": "motorL",
+     "type": "_MOTOR_",
+     "default": "_M1_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "左马达"
+    },
+    {
+     "name": "motorR",
+     "type": "_MOTOR_",
+     "default": "_M2_",
+     "min": "_M1_",
+     "max": "_M8_",
+     "desc": "右马达"
+    },
+    {
+     "name": "speed",
+     "type": "int",
+     "default": "40",
+     "min": "10",
+     "max": "100",
+     "desc": "转速"
+    },
+    {
+     "name": "target",
+     "type": "long",
+     "default": "195",
+     "min": "1",
+     "max": "1000000",
+     "desc": "单轮目标编码量"
+    }
+   ],
+   "code": "{\n    long baseL, baseR, cl, cr;\n\n    SetMotorCode(motorL);\n    SetMotorCode(motorR);\n    baseL = GetMotorCode(motorL);\n    baseR = GetMotorCode(motorR);\n\n    while (1)\n    {\n        cl = GetMotorCode(motorL) - baseL;\n        if (cl < 0) cl = -cl;\n        cr = GetMotorCode(motorR) - baseR;\n        if (cr < 0) cr = -cr;\n        if (cl >= target && cr >= target) break;\n\n        SetMotor(motorL, -speed);\n        SetMotor(motorR, speed);\n    }\n    SetMotor(motorL, 0);\n    SetMotor(motorR, 0);\n}",
+   "tags": [
+    "竞赛",
+    "转角"
+   ]
+  }
+ ]
+}

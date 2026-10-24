@@ -1,0 +1,55 @@
+{
+  "name": "ObstacleAvoid",
+  "caption": "超声避障",
+  "description": "超声波测距避障行走：距离小于阈值时后退并转向绕开（返回 888/999 已过滤）",
+  "icon": "system:GetUltrasound",
+  "softwareType": "E7RCU",
+  "register": "false",
+  "author": "dsh-roboexp",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "sonar",
+      "type": "_PORT_",
+      "default": "_P1_",
+      "min": "_P1_",
+      "max": "_P8_",
+      "desc": "超声模块端口"
+    },
+    {
+      "name": "motorL",
+      "type": "_MOTOR_",
+      "default": "_M1_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "左马达"
+    },
+    {
+      "name": "motorR",
+      "type": "_MOTOR_",
+      "default": "_M2_",
+      "min": "_M1_",
+      "max": "_M8_",
+      "desc": "右马达"
+    },
+    {
+      "name": "speed",
+      "type": "int",
+      "default": "50",
+      "min": "10",
+      "max": "100",
+      "desc": "速度"
+    },
+    {
+      "name": "distCm",
+      "type": "int",
+      "default": "20",
+      "min": "5",
+      "max": "100",
+      "desc": "避障距离阈值(cm)"
+    }
+  ],
+  "sysDeps": [],
+  "userDeps": [],
+  "code": "{\n    int d;\n    while (1)\n    {\n        d = GetUltrasound(sonar);\n        if (d >= 4 && d <= 180 && d < distCm)\n        {\n            SetMotor(motorL, 0);\n            SetMotor(motorR, 0);\n            SetWaitForTime(0.1);\n            SetMotor(motorL, -speed);\n            SetMotor(motorR, -speed);\n            SetWaitForTime(0.5);\n            SetMotor(motorL, -speed);\n            SetMotor(motorR, speed);\n            SetWaitForTime(0.4);\n        }\n        else\n        {\n            SetMotor(motorL, speed);\n            SetMotor(motorR, speed);\n        }\n        SetWaitForTime(0.05);\n    }\n}"
+}
